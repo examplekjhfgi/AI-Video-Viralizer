@@ -5,34 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Viral Video Link</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
-    <!-- Monetag SDK Installation -->
     <script src='//libtl.com/sdk.js' data-zone='10939617' data-sdk='show_10939617'></script>
-
     <style>
-        :root { --primary: #0088cc; --bg: #0b141a; --card: #1c2b36; --accent: #128c7e; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; text-align: center; padding: 20px; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        .container { width: 100%; max-width: 400px; }
-        h2 { color: var(--primary); font-size: 24px; margin-bottom: 25px; letter-spacing: 1px; }
-        .card { background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid #2d3d4a; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; box-sizing: border-box; }
-        input { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #333; background: #2d3d4a; color: white; box-sizing: border-box; margin-bottom: 15px; outline: none; font-size: 14px; }
-        .btn { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; margin-top: 10px; }
-        .btn-seo { background: var(--accent); }
-        .btn:active { transform: scale(0.98); }
-        
-        /* Reward Gate Styling (Inspired by Screenshot_20260430-060511.jpg) */
-        #reward-gate { display: none; }
-        .continue-btn { background: #244b6d; margin-top: 20px; animation: glow 2s infinite; }
-        @keyframes glow { 0% { box-shadow: 0 0 5px #244b6d; } 50% { box-shadow: 0 0 20px #0088cc; } 100% { box-shadow: 0 0 5px #244b6d; } }
-        
-        /* Output Section */
-        #output-section { display: none; margin-top: 25px; text-align: left; background: var(--card); padding: 20px; border-radius: 15px; border-left: 4px solid var(--primary); }
-        #result-content { white-space: pre-wrap; font-size: 14px; line-height: 1.6; margin-bottom: 15px; }
-        .copy-btn { background: #444; font-size: 13px; padding: 10px; }
-        
-        .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; width: 22px; height: 22px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px; }
+        :root { --primary: #0088cc; --bg: #0b141a; --card: #1c2b36; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; text-align: center; padding: 20px; margin: 0; }
+        .card { background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid #2d3d4a; max-width: 400px; margin: 20px auto; }
+        input { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #333; background: #2d3d4a; color: white; box-sizing: border-box; margin-bottom: 15px; outline: none; }
+        .btn { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; }
+        .continue-btn { background: #244b6d; margin-top: 20px; }
+        #output-section { display: none; margin-top: 20px; text-align: left; background: var(--card); padding: 20px; border-radius: 15px; max-width: 400px; margin: 20px auto; }
+        #result-content { white-space: pre-wrap; font-size: 14px; line-height: 1.6; }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; margin-right: 10px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .footer-text { font-size: 11px; color: #555; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -40,107 +24,85 @@
 <div class="container">
     <h2>Viral Video Link AI</h2>
     
-    <!-- Input Section -->
-    <div class="card" id="input-card">
-        <input type="text" id="yt-link" placeholder="Paste YouTube Video Link here...">
+    <div id="input-card" class="card">
+        <input type="text" id="yt-link" placeholder="Paste YouTube Link...">
         <button class="btn" onclick="askPermission('shorts')">🎬 Create AI Shorts</button>
-        <button class="btn btn-seo" onclick="askPermission('seo')">🔍 AI SEO Research</button>
+        <button class="btn" style="background:#128c7e; margin-top:10px;" onclick="askPermission('seo')">🔍 AI SEO Research</button>
     </div>
 
-    <!-- Reward Gate (As requested) -->
-    <div id="reward-gate" class="card">
-        <p style="color: #aaa; font-size: 13px;">To unlock AI high-quality research</p>
-        <h3 style="margin: 10px 0;">Verification Required</h3>
-        <button class="btn continue-btn" onclick="triggerAd()">Continue to Get Result</button>
-        <p class="footer-text">Ads by Monetag</p>
+    <div id="reward-gate" class="card" style="display:none;">
+        <p>Verification Required</p>
+        <button class="btn continue-btn" onclick="triggerAd()">Continue</button>
     </div>
 
-    <!-- Result Section -->
-    <div id="output-section" class="card">
-        <div id="loading" style="display:none; text-align:center;">
-            <div class="loader"></div> Processing with AI...
-        </div>
+    <div id="output-section">
+        <div id="loading" style="display:none;"><div class="loader"></div> <span id="loading-text">AI is thinking...</span></div>
         <div id="result-content"></div>
-        <button class="btn copy-btn" id="copy-btn" onclick="copyToClipboard()" style="display:none;">📋 Copy All SEO Data</button>
-        <button class="btn" onclick="location.reload()" style="background:transparent; color:#888; font-size:12px; margin-top:10px; border:1px solid #333;">Start New Research</button>
     </div>
 </div>
 
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
-    tg.headerColor = '#0b141a';
-
-    let currentTask = "";
     const RAILWAY_URL = "https://ai-video-viralizer-raliway-production.up.railway.app";
+    let currentTask = "";
 
     function askPermission(type) {
-        const link = document.getElementById('yt-link').value.trim();
-        if(!link.includes('youtube.com') && !link.includes('youtu.be')) {
-            alert("❌ Please paste a valid YouTube link!");
-            return;
-        }
-        
+        if(!document.getElementById('yt-link').value.includes('youtu')) return alert("Invalid Link");
         currentTask = type;
         document.getElementById('input-card').style.display = 'none';
         document.getElementById('reward-gate').style.display = 'block';
     }
 
     function triggerAd() {
-        // Monetag Rewarded Popup logic
-        show_10939617('pop').then(() => {
-            callBackend();
-        }).catch(e => {
-            alert("⚠️ Please watch the full ad to unlock AI content.");
-        });
+        show_10939617('pop').then(() => callBackend()).catch(() => alert("Ad error"));
     }
 
     async function callBackend() {
         const link = document.getElementById('yt-link').value.trim();
-        const outputArea = document.getElementById('output-section');
         const resultContent = document.getElementById('result-content');
-        const loading = document.getElementById('loading');
-        const copyBtn = document.getElementById('copy-btn');
-
         document.getElementById('reward-gate').style.display = 'none';
-        outputArea.style.display = 'block';
-        loading.style.display = 'block';
-        resultContent.innerText = "";
-        copyBtn.style.display = "none";
+        document.getElementById('output-section').style.display = 'block';
+        document.getElementById('loading').style.display = 'block';
 
         try {
-            const response = await fetch(`${RAILWAY_URL}/process?url=${encodeURIComponent(link)}&task=${currentTask}`);
-            const result = await response.json();
+            const res = await fetch(`${RAILWAY_URL}/process?url=${encodeURIComponent(link)}&task=${currentTask}`);
+            const data = await res.json();
 
-            loading.style.display = 'none';
-            
-            if(result.type === 'seo') {
-                resultContent.innerHTML = `<span style="color:var(--primary); font-weight:bold;">✨ AI SEO RESULTS:</span>\n\n${result.data}`;
-                copyBtn.style.display = "block";
-            } else if(result.type === 'shorts') {
-                resultContent.innerHTML = `✅ **Shorts Request Sent!**\n\nRender ID: ${result.data.response.id}\n\nYour video is being processed in Shotstack. You can check the dashboard for the final MP4 link.`;
-            } else {
-                resultContent.innerText = "❌ Something went wrong. Try again.";
+            if(data.type === 'seo') {
+                document.getElementById('loading').style.display = 'none';
+                resultContent.innerText = data.data;
+            } else if(data.type === 'shorts') {
+                checkStatus(data.data.response.id);
             }
-        } catch (error) {
-            loading.style.display = 'none';
-            resultContent.innerText = "❌ Connection failed. Check if Railway server is awake.";
+        } catch (e) {
+            document.getElementById('loading').style.display = 'none';
+            resultContent.innerText = "❌ Connection Failed. Try again.";
         }
     }
 
-    function copyToClipboard() {
-        const text = document.getElementById('result-content').innerText;
-        navigator.clipboard.writeText(text).then(() => {
-            const btn = document.getElementById('copy-btn');
-            btn.innerText = "✅ Data Copied!";
-            btn.style.background = "#28a745";
-            setTimeout(() => {
-                btn.innerText = "📋 Copy All SEO Data";
-                btn.style.background = "#444";
-            }, 2000);
-        });
+    async function checkStatus(id) {
+        const loadingText = document.getElementById('loading-text');
+        const resultContent = document.getElementById('result-content');
+        
+        const interval = setInterval(async () => {
+            loadingText.innerText = "⏳ Rendering Video... (1-2 mins)";
+            try {
+                const res = await fetch(`${RAILWAY_URL}/status?id=${id}`);
+                const statusData = await res.json();
+
+                if(statusData.status === 'done') {
+                    clearInterval(interval);
+                    document.getElementById('loading').style.display = 'none';
+                    resultContent.innerHTML = `✅ Ready!<br><video width="100%" controls src="${statusData.url}"></video><br><a href="${statusData.url}" download class="btn">📥 Download</a>`;
+                } else if(statusData.status === 'failed') {
+                    clearInterval(interval);
+                    document.getElementById('loading').style.display = 'none';
+                    resultContent.innerText = "❌ Render Failed.";
+                }
+            } catch (e) {}
+        }, 5000);
     }
 </script>
-
 </body>
 </html>
