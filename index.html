@@ -1,55 +1,146 @@
-import os
-import requests
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-import google.generativeai as genai
-from googleapiclient.discovery import build
-
-app = Flask(__name__)
-CORS(app) # Netlify থেকে রিকোয়েস্ট আসার জন্য জরুরি
-
-# API Keys
-GEMINI_API_KEY = "AIzaSyAJOTVeo3e9lI0k1fNpOe8_3lAA1pBFp34"
-YT_API_KEY = "AIzaSyCa0dwxymgiP-KIRD1VJ99GGMMHqGQDycc"
-SHOTSTACK_KEY = "C6CEKeobSqtR1wmGTJmhMYzdoJx2gqPhyUegts7m"
-
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-pro')
-
-def get_video_details(video_id):
-    try:
-        youtube = build('youtube', 'v3', developerKey=YT_API_KEY)
-        request = youtube.videos().list(part="snippet", id=video_id)
-        response = request.execute()
-        return response['items'][0]['snippet'] if response['items'] else None
-    except:
-        return None
-
-@app.route('/process', methods=['GET'])
-def process():
-    video_url = request.args.get('url')
-    task = request.args.get('task')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Viral Video Link</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
-    video_id = video_url.split("v=")[-1].split("&")[0] if "v=" in video_url else video_url.split("/")[-1]
-    details = get_video_details(video_id)
+    <!-- Monetag SDK Installation -->
+    <script src='//libtl.com/sdk.js' data-zone='10939617' data-sdk='show_10939617'></script>
+
+    <style>
+        :root { --primary: #0088cc; --bg: #0b141a; --card: #1c2b36; --accent: #128c7e; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; text-align: center; padding: 20px; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .container { width: 100%; max-width: 400px; }
+        h2 { color: var(--primary); font-size: 24px; margin-bottom: 25px; letter-spacing: 1px; }
+        .card { background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid #2d3d4a; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; box-sizing: border-box; }
+        input { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #333; background: #2d3d4a; color: white; box-sizing: border-box; margin-bottom: 15px; outline: none; font-size: 14px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; margin-top: 10px; }
+        .btn-seo { background: var(--accent); }
+        .btn:active { transform: scale(0.98); }
+        
+        /* Reward Gate Styling (Inspired by Screenshot_20260430-060511.jpg) */
+        #reward-gate { display: none; }
+        .continue-btn { background: #244b6d; margin-top: 20px; animation: glow 2s infinite; }
+        @keyframes glow { 0% { box-shadow: 0 0 5px #244b6d; } 50% { box-shadow: 0 0 20px #0088cc; } 100% { box-shadow: 0 0 5px #244b6d; } }
+        
+        /* Output Section */
+        #output-section { display: none; margin-top: 25px; text-align: left; background: var(--card); padding: 20px; border-radius: 15px; border-left: 4px solid var(--primary); }
+        #result-content { white-space: pre-wrap; font-size: 14px; line-height: 1.6; margin-bottom: 15px; }
+        .copy-btn { background: #444; font-size: 13px; padding: 10px; }
+        
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; width: 22px; height: 22px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .footer-text { font-size: 11px; color: #555; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Viral Video Link AI</h2>
     
-    if not details:
-        return jsonify({"error": "Video not found"}), 404
+    <!-- Input Section -->
+    <div class="card" id="input-card">
+        <input type="text" id="yt-link" placeholder="Paste YouTube Video Link here...">
+        <button class="btn" onclick="askPermission('shorts')">🎬 Create AI Shorts</button>
+        <button class="btn btn-seo" onclick="askPermission('seo')">🔍 AI SEO Research</button>
+    </div>
 
-    if task == 'seo':
-        prompt = f"Analyze this YouTube video: Title: {details['title']}, Desc: {details['description']}. Provide 5 viral titles, 20 high-ranking tags, a viral description, and 10 SEO keywords."
-        response = model.generate_content(prompt)
-        return jsonify({"type": "seo", "data": response.text})
+    <!-- Reward Gate (As requested) -->
+    <div id="reward-gate" class="card">
+        <p style="color: #aaa; font-size: 13px;">To unlock AI high-quality research</p>
+        <h3 style="margin: 10px 0;">Verification Required</h3>
+        <button class="btn continue-btn" onclick="triggerAd()">Continue to Get Result</button>
+        <p class="footer-text">Ads by Monetag</p>
+    </div>
 
-    elif task == 'shorts':
-        shotstack_url = "https://api.shotstack.io/v1/render"
-        headers = {"x-api-key": SHOTSTACK_KEY, "Content-Type": "application/json"}
-        payload = {
-            "timeline": {"tracks": [{"clips": [{"asset": {"type": "video", "src": video_url}, "start": 0, "length": 59}]}]},
-            "output": {"format": "mp4", "resolution": "hd"}
+    <!-- Result Section -->
+    <div id="output-section" class="card">
+        <div id="loading" style="display:none; text-align:center;">
+            <div class="loader"></div> Processing with AI...
+        </div>
+        <div id="result-content"></div>
+        <button class="btn copy-btn" id="copy-btn" onclick="copyToClipboard()" style="display:none;">📋 Copy All SEO Data</button>
+        <button class="btn" onclick="location.reload()" style="background:transparent; color:#888; font-size:12px; margin-top:10px; border:1px solid #333;">Start New Research</button>
+    </div>
+</div>
+
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.headerColor = '#0b141a';
+
+    let currentTask = "";
+    const RAILWAY_URL = "https://ai-video-viralizer-raliway-production.up.railway.app";
+
+    function askPermission(type) {
+        const link = document.getElementById('yt-link').value.trim();
+        if(!link.includes('youtube.com') && !link.includes('youtu.be')) {
+            alert("❌ Please paste a valid YouTube link!");
+            return;
         }
-        res = requests.post(shotstack_url, json=payload, headers=headers)
-        return jsonify({"type": "shorts", "data": res.json()})
+        
+        currentTask = type;
+        document.getElementById('input-card').style.display = 'none';
+        document.getElementById('reward-gate').style.display = 'block';
+    }
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    function triggerAd() {
+        // Monetag Rewarded Popup logic
+        show_10939617('pop').then(() => {
+            callBackend();
+        }).catch(e => {
+            alert("⚠️ Please watch the full ad to unlock AI content.");
+        });
+    }
+
+    async function callBackend() {
+        const link = document.getElementById('yt-link').value.trim();
+        const outputArea = document.getElementById('output-section');
+        const resultContent = document.getElementById('result-content');
+        const loading = document.getElementById('loading');
+        const copyBtn = document.getElementById('copy-btn');
+
+        document.getElementById('reward-gate').style.display = 'none';
+        outputArea.style.display = 'block';
+        loading.style.display = 'block';
+        resultContent.innerText = "";
+        copyBtn.style.display = "none";
+
+        try {
+            const response = await fetch(`${RAILWAY_URL}/process?url=${encodeURIComponent(link)}&task=${currentTask}`);
+            const result = await response.json();
+
+            loading.style.display = 'none';
+            
+            if(result.type === 'seo') {
+                resultContent.innerHTML = `<span style="color:var(--primary); font-weight:bold;">✨ AI SEO RESULTS:</span>\n\n${result.data}`;
+                copyBtn.style.display = "block";
+            } else if(result.type === 'shorts') {
+                resultContent.innerHTML = `✅ **Shorts Request Sent!**\n\nRender ID: ${result.data.response.id}\n\nYour video is being processed in Shotstack. You can check the dashboard for the final MP4 link.`;
+            } else {
+                resultContent.innerText = "❌ Something went wrong. Try again.";
+            }
+        } catch (error) {
+            loading.style.display = 'none';
+            resultContent.innerText = "❌ Connection failed. Check if Railway server is awake.";
+        }
+    }
+
+    function copyToClipboard() {
+        const text = document.getElementById('result-content').innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = document.getElementById('copy-btn');
+            btn.innerText = "✅ Data Copied!";
+            btn.style.background = "#28a745";
+            setTimeout(() => {
+                btn.innerText = "📋 Copy All SEO Data";
+                btn.style.background = "#444";
+            }, 2000);
+        });
+    }
+</script>
+
+</body>
+</html>
