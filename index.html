@@ -3,69 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 3D Generator | Brutal X</title>
+    <title>3D AI Generator | Brutal X</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0A0F1E; color: white; }
-        .neon-accent { color: #1ED760; }
-        .btn-gradient { background: linear-gradient(90deg, #1ED760, #1CE8A4); }
+        body { background-color: #0A0F1E; color: #E5E7EB; font-family: 'Inter', sans-serif; }
+        .neon-text { color: #1ED760; text-shadow: 0 0 10px rgba(30, 215, 96, 0.5); }
+        .btn-glow { background: linear-gradient(90deg, #1ED760, #1CE8A4); color: #000; box-shadow: 0 4px 15px rgba(30, 215, 96, 0.3); }
+        .card { background: #161B22; border: 1px solid #30363D; }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen p-4">
+<body class="flex flex-col items-center justify-center min-h-screen p-6">
 
-    <div class="max-w-md w-full bg-[#161B22] p-8 rounded-2xl shadow-2xl border border-gray-800">
-        <h1 class="text-3xl font-bold mb-2 neon-accent text-center">AI 3D Generator</h1>
-        <p class="text-gray-400 text-sm text-center mb-6">Create 3D assets from text prompts</p>
+    <div class="card max-w-lg w-full p-10 rounded-3xl shadow-2xl">
+        <h1 class="text-4xl font-extrabold mb-3 neon-text text-center italic">BRUTAL X</h1>
+        <h2 class="text-xl font-medium mb-8 text-center text-gray-400">AI Text-to-3D Generator</h2>
 
-        <input id="promptInput" type="text" placeholder="e.g. A futuristic chair" 
-               class="w-full p-4 bg-[#0A0F1E] border border-gray-700 rounded-xl mb-4 focus:outline-none focus:border-[#1ED760]">
+        <div class="space-y-6">
+            <input id="prompt" type="text" placeholder="Describe your 3D model (e.g. Neon Sword)" 
+                   class="w-full p-4 bg-[#0A0F1E] border border-gray-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#1ED760] text-white">
 
-        <button onclick="generate3D()" id="genBtn"
-                class="w-full p-4 btn-gradient rounded-xl font-bold text-black hover:opacity-90 transition shadow-lg">
-            Generate 3D Model
-        </button>
+            <button onclick="startGeneration()" id="mainBtn" 
+                    class="w-full p-4 btn-glow rounded-2xl font-bold uppercase tracking-widest hover:scale-[1.02] transition-transform active:scale-95">
+                Generate 3D Asset
+            </button>
+        </div>
 
-        <div id="status" class="mt-6 text-center text-sm text-gray-500"></div>
+        <div id="loader" class="mt-8 hidden text-center">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#1ED760] mb-3"></div>
+            <p id="status" class="text-sm text-[#1CE8A4]">Processing your imagination...</p>
+        </div>
     </div>
 
     <script>
-        async function generate3D() {
-            const prompt = document.getElementById('promptInput').value;
-            const status = document.getElementById('status');
-            const btn = document.getElementById('genBtn');
+        const RAILWAY_URL = "RAILWAY_URL_HERE"; // এখানে আপনার রেলওয়ে লিঙ্ক দিন
 
-            if (!prompt) return alert("Please enter a prompt!");
+        async function startGeneration() {
+            const promptValue = document.getElementById('prompt').value;
+            const btn = document.getElementById('mainBtn');
+            const loader = document.getElementById('loader');
+            const statusText = document.getElementById('status');
 
-            status.innerText = "Generating... This might take 1-2 minutes.";
-            btn.disabled = true;
-            btn.style.opacity = "0.5";
+            if (!promptValue) return alert("Please enter a prompt!");
+
+            btn.classList.add('hidden');
+            loader.classList.remove('hidden');
 
             try {
-                const response = await fetch('আপনার_রেলওয়ে_ইউআরএল/generate-3d', {
+                const response = await fetch(`${RAILWAY_URL}/generate-3d`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: prompt })
+                    body: JSON.stringify({ prompt: promptValue })
                 });
+
+                if (response.status === 503) {
+                    statusText.innerText = "Model is warming up. Retrying in 10s...";
+                    setTimeout(startGeneration, 10000);
+                    return;
+                }
 
                 if (response.ok) {
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'model_3d.glb';
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    status.innerText = "Success! Your 3D model is downloaded.";
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `${promptValue.replace(/\s+/g, '_')}_3D.glb`;
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    statusText.innerText = "Done! Your 3D model is downloaded.";
                 } else {
-                    status.innerText = "Error: Something went wrong on the server.";
+                    const err = await response.json();
+                    alert("Error: " + (err.error || "Server busy"));
                 }
-            } catch (error) {
-                status.innerText = "Error: Could not connect to Railway.";
-                console.error(error);
+            } catch (err) {
+                alert("Could not connect to Railway backend.");
             } finally {
-                btn.disabled = false;
-                btn.style.opacity = "1";
+                btn.classList.remove('hidden');
+                loader.classList.add('hidden');
             }
         }
     </script>
