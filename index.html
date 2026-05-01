@@ -3,89 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Design Expert Audit</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Monetag Script -->
-    <script src='//libtl.com/sdk.js' data-zone='10939617' data-sdk='show_10939617'></script>
+    <title>AI 3D Generator | Brutal X</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { --bg: #111111; --card: #1c1c1c; --neon: #39FF14; --text: #e0e0e0; }
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; }
-        .card { background: var(--card); border-radius: 15px; padding: 20px; border: 1px solid #333; margin-bottom: 20px; }
-        .neon-btn { background: var(--neon); color: black; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; font-size: 16px; margin-top: 10px; }
-        .input-box { width: 100%; background: #2a2a2a; border: 1px solid #444; padding: 12px; border-radius: 8px; color: white; margin-bottom: 15px; box-sizing: border-box; }
-        #result-area { display: none; line-height: 1.6; font-size: 14px; }
-        .loader { border: 3px solid #333; border-top: 3px solid var(--neon); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        body { background-color: #0A0F1E; color: white; }
+        .neon-accent { color: #1ED760; }
+        .btn-gradient { background: linear-gradient(90deg, #1ED760, #1CE8A4); }
     </style>
 </head>
-<body>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
 
-<div class="card">
-    <h2 style="color: var(--neon); margin-top: 0;">AI Design Mentor</h2>
-    <p style="font-size: 13px; color: #888;">Expert UI/UX audit for your thumbnails & apps.</p>
-    
-    <label>Upload Design Thumbnail:</label>
-    <input type="file" id="file-input" class="input-box" accept="image/*">
-    
-    <label>What's the goal of this design?</label>
-    <textarea id="desc-input" class="input-box" placeholder="e.g. Finance App Landing Page"></textarea>
-    
-    <button class="neon-btn" onclick="triggerAd('audit')">🔍 Start Design Audit</button>
-</div>
+    <div class="max-w-md w-full bg-[#161B22] p-8 rounded-2xl shadow-2xl border border-gray-800">
+        <h1 class="text-3xl font-bold mb-2 neon-accent text-center">AI 3D Generator</h1>
+        <p class="text-gray-400 text-sm text-center mb-6">Create 3D assets from text prompts</p>
 
-<div id="result-area" class="card">
-    <div id="loading" style="display:none;"><div class="loader"></div> Analyzing your pixels...</div>
-    <div id="audit-content"></div>
-    <button id="next-step" class="neon-btn" style="display:none; background:#222; color:white;" onclick="triggerAd('seo')">Optimize SEO for Platforms</button>
-</div>
+        <input id="promptInput" type="text" placeholder="e.g. A futuristic chair" 
+               class="w-full p-4 bg-[#0A0F1E] border border-gray-700 rounded-xl mb-4 focus:outline-none focus:border-[#1ED760]">
 
-<script>
-    const RAILWAY_URL = "https://ai-video-viralizer-raliway-production.up.railway.app"; // রেলওয়ে থেকে পাওয়া লিঙ্ক দিন
-    const tg = window.Telegram.WebApp;
-    tg.expand();
+        <button onclick="generate3D()" id="genBtn"
+                class="w-full p-4 btn-gradient rounded-xl font-bold text-black hover:opacity-90 transition shadow-lg">
+            Generate 3D Model
+        </button>
 
-    function triggerAd(task) {
-        show_10939617().then(() => {
-            if(task === 'audit') startAudit();
-            else generateSEO();
-        }).catch(() => {
-            // যদি অ্যাড লোড না হয়, তবুও কাজ চলবে
-            if(task === 'audit') startAudit();
-            else generateSEO();
-        });
-    }
+        <div id="status" class="mt-6 text-center text-sm text-gray-500"></div>
+    </div>
 
-    async function startAudit() {
-        const file = document.getElementById('file-input').files[0];
-        if(!file) return alert("Please select an image!");
+    <script>
+        async function generate3D() {
+            const prompt = document.getElementById('promptInput').value;
+            const status = document.getElementById('status');
+            const btn = document.getElementById('genBtn');
 
-        document.getElementById('result-area').style.display = 'block';
-        document.getElementById('loading').style.display = 'block';
-        document.getElementById('audit-content').innerText = "";
+            if (!prompt) return alert("Please enter a prompt!");
 
-        const formData = new FormData();
-        formData.append('image', file);
-        formData.append('description', document.getElementById('desc-input').value);
+            status.innerText = "Generating... This might take 1-2 minutes.";
+            btn.disabled = true;
+            btn.style.opacity = "0.5";
 
-        try {
-            const res = await fetch(`${RAILWAY_URL}/audit`, { method: 'POST', body: formData });
-            const data = await res.json();
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('audit-content').innerHTML = `<h3>Expert Feedback:</h3>${data.result.replace(/\n/g, '<br>')}`;
-            
-            if(data.result.includes('100')) {
-                document.getElementById('next-step').style.display = 'block';
+            try {
+                const response = await fetch('আপনার_রেলওয়ে_ইউআরএল/generate-3d', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'model_3d.glb';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    status.innerText = "Success! Your 3D model is downloaded.";
+                } else {
+                    status.innerText = "Error: Something went wrong on the server.";
+                }
+            } catch (error) {
+                status.innerText = "Error: Could not connect to Railway.";
+                console.error(error);
+            } finally {
+                btn.disabled = false;
+                btn.style.opacity = "1";
             }
-        } catch (e) {
-            alert("Connection Error!");
         }
-    }
-
-    async function generateSEO() {
-        // এখানে এসইও জেনারেট করার লজিক এবং মনিট্যাগ ডিরেক্ট লিঙ্ক ব্যবহার করা যাবে
-        window.open("https://omg10.com/4/10947998", "_blank");
-        // বাকি এসইও কল এখানে হবে...
-    }
-</script>
+    </script>
 </body>
 </html>
